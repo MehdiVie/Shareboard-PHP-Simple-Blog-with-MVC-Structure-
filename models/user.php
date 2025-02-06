@@ -4,17 +4,21 @@
 class UserModel extends Model{
 	public function register(){
 				// Sanitize POST
-		$post = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+		$post = filter_input_array(INPUT_POST, [
+		    'name' => FILTER_SANITIZE_FULL_SPECIAL_CHARS,
+		    'email' => FILTER_SANITIZE_EMAIL,
+		    'password' => FILTER_DEFAULT // No sanitization for passwords (hashing is enough)
+		]);
 
 
-		if(isset($post['submit'])){
-
+		if ($_SERVER['REQUEST_METHOD'] === 'POST') { 
+			
 			if($post['name'] == '' || $post['email'] == '' || $post['password'] == ''){
 				Messages::setMsg('Please Fill In All Fields', 'error');
 				return;
 			}
 
-			$password = isset($post['password']) ? md5($post['password']) : null;
+			$password = password_hash($post['password'], PASSWORD_DEFAULT);
 
 			// Insert into MySQL
 			$this->query('INSERT INTO users (name, email, password) VALUES(:name, :email, :password)');
@@ -32,40 +36,43 @@ class UserModel extends Model{
 	}
 
 	public function login(){
-				// Sanitize POST
-		$post = filter_input_array(INPUT_POST, FILTER_SANITIZE_STRING);
+	    // Sanitize POST
+	    $post = filter_input_array(INPUT_POST, [
+	        'email' => FILTER_SANITIZE_EMAIL,
+	        'password' => FILTER_DEFAULT // No sanitization for passwords (hashing is enough)
+	    ]);
 
-		$password = isset($post['password']) ? md5($post['password']) : null;
+	    // Check if form is submitted
+	    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	        
+	        if (empty($post['email']) || empty($post['password'])) {
+	            Messages::setMsg('Please Fill In All Fields', 'error');
+	            return;
+	        }
 
-		if(isset($post['submit'])){
+	        // Fetch user from DB
+	        $this->query('SELECT * FROM users WHERE email = :email');
+	        $this->bind(':email', $post['email']);
+	        $this->execute();
+	        $row = $this->single();
 
-			// Insert into MySQL
-			$this->query('SELECT * FROM users WHERE (email = :email AND password = :password )');
-			$this->bind(':email', $post['email']);
-			$this->bind(':password', $password);
-			$this->execute();
-			// Verify
-			$row = $this->single();
-			if($row){
-				// Redirect
+	        // Verify password
+	        if ($row && password_verify($post['password'], $row['password'])) {
+	            $_SESSION['is_logged_in'] = true;
+	            $_SESSION['user_data'] = [
+	                "id" => $row['id'],
+	                "email" => $row['email'],
+	                "name" => $row['name']
+	            ];
 
-				$_SESSION['is_logged_in'] = true ; 
-				$_SESSION['user_data'] = array(
-					"id" => $row['id'] , 
-					"email" => $row['email'] , 
-					"name" => $row['name']
-				);
-				//print_r($_SESSION['user_logged_in']);
-				
-				header('Location: '.ROOT_URL.'shares');
-				exit();
-				
-			} else {
-				Messages::setMsg('Incorrect Login', 'error');
-			}
-		}
-		return;
+	            header('Location: '.ROOT_URL.'shares');
+	            exit();
+	        } else {
+	            Messages::setMsg('Incorrect Email or Password', 'error');
+	        }
+	    }
 	}
+
 
 
 }

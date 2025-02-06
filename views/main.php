@@ -12,11 +12,10 @@
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-
         <div id="navbarNav" class="collapse navbar-collapse">
           <ul class="navbar-nav">
             <li class="nav-item"><a class="nav-link" href="<?php echo ROOT_URL; ?>">Home</a></li>
-            <li class="nav-item"><a class="nav-link" href="<?php echo ROOT_URL; ?>shares">Shares</a></li>
+            <!--<li class="nav-item"><a class="nav-link" href="<?php echo ROOT_URL; ?>shares">Shares</a></li>-->
           </ul>
 
           <ul class="navbar-nav ms-auto">
@@ -33,10 +32,11 @@
     </nav>
 
     <div class="container">
-     <div class="row">
-      <?php Messages::display(); ?>
-      <?php require($view); ?>
-     </div>
+        <div class="row">
+            <?php Messages::display(); ?>
+            
+            <?php require($view); ?>
+        </div>
     </div>
 
     
